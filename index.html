@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>El Secreto de NKD Island</title>
+<meta name="referrer" content="no-referrer">
+<style>
+  :root{
+    --ink:#1a0f1e; --parch:#e8d8a8; --parch2:#d8c084; --gold:#f2c24b;
+    --teal:#2f8f8a; --coral:#e0654a; --violet:#6a4a8a; --shadow:#120a16;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#0b0710;overflow:hidden;
+    font-family:"Courier New",monospace;color:var(--parch);}
+  img{image-rendering:pixelated;}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0710;}
+  #frame{position:relative;width:min(100vw,177.78vh);height:min(56.25vw,100vh);
+    background:#000;overflow:hidden;box-shadow:0 0 0 3px var(--ink),0 0 40px #000 inset;}
+  .scene-bg{position:absolute;inset:0;background-size:cover;background-position:center;image-rendering:pixelated;z-index:1;}
+  #bgfail{position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:24px;background:#241634;color:#f2c24b;font-size:clamp(12px,2vw,17px);line-height:1.55;}
+  #obj{position:absolute;top:0;left:0;right:0;z-index:6;display:flex;gap:8px;align-items:center;
+    padding:6px 10px;background:linear-gradient(#000a,#0000);font-size:clamp(10px,1.6vw,15px);
+    text-shadow:1px 1px 0 #000;pointer-events:none;}
+  #obj b{color:var(--gold);}
+  .hot{position:absolute;z-index:4;border:0;background:transparent;border-radius:8px;cursor:pointer;
+    transition:box-shadow .18s,background .18s;}
+  #frame.showhots .hot{box-shadow:0 0 0 2px rgba(242,194,75,.45) inset;background:rgba(242,194,75,.07);}
+  .hot:hover,.hot:focus{box-shadow:0 0 0 2px rgba(242,194,75,.78) inset;background:rgba(242,194,75,.10);outline:none;}
+  .hot .lbl{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;
+    background:#000c;color:var(--gold);font-size:11px;padding:2px 6px;border-radius:4px;white-space:nowrap;
+    opacity:0;transition:opacity .12s;pointer-events:none;}
+  .hot:hover .lbl,.hot:focus .lbl{opacity:1;}
+  #inv{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;gap:6px;align-items:center;
+    padding:6px 8px;background:linear-gradient(#0000,#000c);min-height:54px;}
+  #inv .slot{width:44px;height:44px;flex:0 0 auto;border:2px solid #00000055;border-radius:6px;
+    background:#1a0f1e88;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;}
+  #inv .slot img{width:100%;height:100%;object-fit:cover;}
+  #inv .slot.sel{border-color:var(--gold);box-shadow:0 0 10px var(--gold);}
+  #invhint{margin-left:auto;font-size:clamp(9px,1.4vw,13px);color:#cbb;text-shadow:1px 1px 0 #000;padding-right:6px;}
+  #dlg{position:absolute;left:0;right:0;bottom:0;z-index:9;display:none;padding:10px;cursor:pointer;
+    background:linear-gradient(#0000,#000 40%);}
+  #dlg .box{display:flex;gap:10px;align-items:flex-end;max-width:1000px;margin:0 auto;}
+  #dlg .port{width:clamp(64px,12vw,108px);height:clamp(64px,12vw,108px);flex:0 0 auto;border:3px solid var(--ink);
+    border-radius:8px;background:#000;overflow:hidden;box-shadow:0 0 0 2px var(--gold);}
+  #dlg .port img{width:100%;height:100%;object-fit:cover;}
+  #dlg .txt{flex:1;background:var(--parch);color:var(--ink);border:3px solid var(--ink);border-radius:8px;
+    padding:10px 12px;min-height:64px;box-shadow:0 4px 0 #0008;}
+  #dlg .nm{font-weight:bold;font-size:clamp(11px,1.7vw,15px);margin-bottom:3px;letter-spacing:.5px;}
+  #dlg .ln{font-size:clamp(12px,1.9vw,17px);line-height:1.35;}
+  #dlg .more{text-align:right;font-size:11px;color:#7a5;margin-top:4px;}
+  #duel{position:absolute;inset:0;z-index:10;display:none;flex-direction:column;background:#0b0710e0;padding:10px;}
+  #duel .top{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:4px;}
+  #duel .port{width:clamp(56px,10vw,90px);height:clamp(56px,10vw,90px);border:3px solid var(--ink);border-radius:8px;
+    overflow:hidden;box-shadow:0 0 0 2px var(--coral);}
+  #duel .port img{width:100%;height:100%;object-fit:cover;}
+  #duel .score{font-size:clamp(11px,1.7vw,15px);color:var(--gold);text-shadow:1px 1px 0 #000;}
+  #duel .taunt{max-width:820px;margin:10px auto 6px;background:var(--parch);color:var(--ink);
+    border:3px solid var(--ink);border-radius:8px;padding:10px 12px;font-size:clamp(13px,2vw,18px);text-align:center;}
+  #duel .ops{display:flex;flex-direction:column;gap:8px;max-width:760px;margin:6px auto;width:100%;flex:1;justify-content:center;}
+  #duel .op{background:var(--teal);color:#fff;border:3px solid var(--ink);border-radius:8px;
+    padding:10px 12px;font-family:inherit;font-size:clamp(12px,1.8vw,16px);cursor:pointer;text-align:left;
+    box-shadow:0 4px 0 #0007;transition:transform .06s;}
+  #duel .op:hover{transform:translateY(-2px);background:#3aa39d;}
+  #duel .op:disabled{opacity:.7;cursor:default;transform:none;}
+  .screen{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:20px;background-size:cover;background-position:center;}
+  .screen .veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,#0006,#000d);}
+  .screen .inner{position:relative;z-index:2;max-width:760px;}
+  .logo{font-weight:bold;letter-spacing:2px;line-height:1;color:var(--gold);
+    text-shadow:3px 3px 0 var(--ink),6px 6px 0 #0009;font-size:clamp(26px,6vw,64px);}
+  .sub{color:var(--parch);margin:10px 0 4px;font-size:clamp(13px,2.4vw,22px);text-shadow:2px 2px 0 #000;}
+  .blurb{color:#e9dcc0;font-size:clamp(12px,1.9vw,17px);line-height:1.5;margin:14px auto;max-width:620px;text-shadow:1px 1px 0 #000;}
+  .btn{display:inline-block;margin-top:10px;background:var(--coral);color:#fff;border:3px solid var(--ink);
+    border-radius:10px;padding:12px 26px;font-family:inherit;font-weight:bold;font-size:clamp(15px,2.6vw,22px);
+    cursor:pointer;box-shadow:0 5px 0 #0008;letter-spacing:1px;}
+  .btn:hover{background:#ef7657;transform:translateY(-2px);}
+  .tiny{margin-top:16px;font-size:11px;color:#a99;text-shadow:1px 1px 0 #000;}
+  #mute{position:absolute;top:6px;right:8px;z-index:8;background:#000a;color:var(--gold);border:2px solid var(--ink);
+    border-radius:6px;width:34px;height:30px;cursor:pointer;font-size:14px;}
+  #toast{position:absolute;left:50%;top:42px;transform:translateX(-50%);z-index:11;background:#000c;color:var(--parch);
+    border:2px solid var(--gold);border-radius:8px;padding:6px 12px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%;text-align:center;}
+  #load{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:#0b0710;color:var(--gold);font-size:16px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div id="stage"><div id="frame">
+  <div id="obj"></div>
+  <button id="mute" title="Musica">&#9834;</button>
+  <div id="toast"></div>
+  <div id="bgfail">Si ves este mensaje, el arte no cargo en tu visor.<br>Descarga el archivo y abrelo directamente en tu navegador (Chrome/Safari/Edge).</div>
+  <div id="hots"></div>
+  <div id="inv"></div>
+  <div id="dlg"><div class="box">
+    <div class="port"><img id="dlgport" alt=""></div>
+    <div class="txt"><div class="nm" id="dlgnm"></div><div class="ln" id="dlgln"></div><div class="more">&#9660; clic para continuar</div></div>
+  </div></div>
+  <div id="duel">
+    <div class="top"><div class="port"><img id="duelport" alt=""></div><div class="score" id="duelscore"></div></div>
+    <div class="taunt" id="dueltaunt"></div>
+    <div class="ops" id="duelops"></div>
+  </div>
+  <div class="screen" id="start"><div class="veil"></div><div class="inner">
+    <div class="logo">EL SECRETO DE<br>NKD ISLAND</div>
+    <div class="sub">&#9875; Una aventura pirata de Chato &amp; Jerry &#9875;</div>
+    <div class="blurb">Llegas a una isla del Caribe como el Capitan <b>Invierno Funk</b>. Para reunir tripulacion y zarpar debes superar las <b>tres pruebas piratas</b>: el Duelo de Ingenio, el Tesoro Escondido y colar al Invitado Imposible a bordo. Apunta y haz clic para explorar, hablar y combinar objetos.</div>
+    <button class="btn" id="playbtn">JUGAR &#9656;</button>
+    <div class="tiny">Pixel art y musica generados con Higgsfield &middot; DMS: Do Meaningful Shit</div>
+  </div></div>
+  <div class="screen" id="win"><div class="veil"></div><div class="inner">
+    <div class="logo" style="color:var(--coral)">&iexcl;ZARPASTE!</div>
+    <div class="blurb" id="wintext"></div>
+    <button class="btn" id="againbtn">Jugar de nuevo</button>
+    <div class="tiny">Hecho a tu medida, Capitan Invierno Funk.</div>
+  </div></div>
+  <div id="load">cargando la isla&hellip;</div>
+</div></div>
+<audio id="bgm" loop preload="auto"></audio>
+<script>
+const A = {
+  bg_cantina:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_044930_d42bbae3-5d20-4e8c-bceb-d370bf48c6d0.png",
+  bg_pueblo:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040122_9457eb8b-4de6-4a8b-9a76-6d5bea3a57ef.jpeg",
+  bg_cueva:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040130_bd253508-d6b1-4b4f-b29f-1d9cfc4e979c.jpeg",
+  bg_muelle:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_044938_407ebfcc-3cc9-4cfe-8a45-2206d0a4eb2a.png",
+  p_jerry:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040146_85ec904a-0887-4ec9-93dd-5f02baa811c9.jpeg",
+  p_chato:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040152_bd3ecbd1-4e9e-444e-bd3d-990bda3f9e68.jpeg",
+  p_mistica:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040159_df22fd06-d192-4264-8725-0142db7693d7.jpeg",
+  p_corp:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040205_86d09097-1342-4f96-86b9-1c129814a2a0.jpeg",
+  p_crew:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040212_be71f8f9-be58-4d95-a354-5a6f0ed248e2.jpeg",
+  i_grog:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040219_dcc092ff-f408-4aef-a01f-f3aceaf32f3f.jpeg",
+  i_mapaA:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040226_68f278b1-f594-471a-9829-ae0f57b3b8aa.jpeg",
+  i_mapaB:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040234_ef89cbe1-e186-4454-bb4d-8978ef6d700a.jpeg",
+  i_mapaFull:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040239_e490bbbe-b9d6-40f8-a613-77bec1fd3ba8.jpeg",
+  i_antorcha:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040246_6abc0092-efcd-4833-9a51-3938d4029261.jpeg",
+  i_moneda:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040251_c079c647-c3c0-46f1-81ce-0ef7af858569.jpeg",
+  i_loro:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040257_e35c0681-8e5e-4518-ac54-e0a021854bc0.jpeg",
+  i_micro:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040302_a6ea468d-7059-4ddd-a2bd-78362d50fa48.jpeg",
+  title:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_040308_b5f58fe3-5c2c-4cd1-8df8-8daea524e058.jpeg",
+  music:"https://d8j0ntlcm91z4.cloudfront.net/user_3EayB1BC9eCbaydKapK7IsgOQN1/hf_20260616_043714_d2404bc6-aa8e-490d-8722-43f1c0549d82.m4a"
+};
+const ITEMS = {
+  grog:{name:"Grog",img:A.i_grog},
+  mapaA:{name:"Mitad de mapa (A)",img:A.i_mapaA},
+  mapaB:{name:"Mitad de mapa (B)",img:A.i_mapaB},
+  mapaFull:{name:"Mapa completo",img:A.i_mapaFull},
+  antorcha:{name:"Antorcha",img:A.i_antorcha},
+  moneda:{name:"Moneda de oro",img:A.i_moneda},
+  loro:{name:"Loro deslenguado",img:A.i_loro},
+  micro:{name:"Microfono Dorado",img:A.i_micro}
+};
+const SPK = {
+  jerry:{nm:"Invierno Funk",port:A.p_jerry},
+  chato:{nm:"El Chato",port:A.p_chato},
+  mistica:{nm:"La Mistica",port:A.p_mistica},
+  corp:{nm:"Don Corporativo",port:A.p_corp},
+  ale:{nm:"Ale",port:A.p_crew},
+  dan:{nm:"Dan",port:A.p_crew},
+  viri:{nm:"Viri",port:A.p_crew},
+  crew:{nm:"La tripulacion",port:A.p_crew},
+  narr:{nm:"",port:""}
+};
+let S, selected=null, dq=[], dqAfter=null;
+function freshState(){return{
+  scene:"cantina", inv:[],
+  talkedChato:false, talkedMistica:false,
+  wonDuel:false, caveLit:false, gotTreasure:false,
+  crewRallied:false, guardDistracted:false, dialBusy:false
+};}
+function has(id){return S.inv.includes(id);}
+function give(id){ if(!has(id)){S.inv.push(id); toast("Obtienes: "+ITEMS[id].name);} renderInv(); }
+function take(id){ S.inv=S.inv.filter(x=>x!==id); renderInv(); }
+
+const SCENES = {
+  cantina:{ bg:A.bg_cantina, hots:[
+    {id:"chato", x:40,y:30,w:22,h:42, lbl:"El Chato"},
+    {id:"dan",   x:7,y:46,w:18,h:36, lbl:"Dan"},
+    {id:"grog",  x:64,y:54,w:12,h:16, lbl:"Tarro de grog"},
+    {id:"door_pueblo", x:87,y:22,w:12,h:62, lbl:"\u2192 Al pueblo"}
+  ]},
+  pueblo:{ bg:A.bg_pueblo, hots:[
+    {id:"corp",  x:41,y:30,w:20,h:48, lbl:"Don Corporativo"},
+    {id:"viri",  x:4,y:40,w:23,h:44, lbl:"Puesto de Viri"},
+    {id:"mistica",x:75,y:32,w:22,h:50, lbl:"Tienda de la Mistica"},
+    {id:"coin",  x:46,y:83,w:10,h:11, lbl:"Algo brilla"},
+    {id:"back_cantina", x:0,y:22,w:7,h:62, lbl:"\u2190 Cantina"},
+    {id:"to_cave", x:34,y:5,w:30,h:14, lbl:"\u2191 Sendero al norte"},
+    {id:"to_muelle", x:93,y:22,w:7,h:62, lbl:"\u2192 Al muelle"}
+  ]},
+  cueva:{ bg:A.bg_cueva, hots:[
+    {id:"altar", x:38,y:34,w:24,h:42, lbl:"Altar de piedra"},
+    {id:"cave_dark", x:0,y:0,w:100,h:100, lbl:""},
+    {id:"back_pueblo", x:0,y:22,w:7,h:62, lbl:"\u2190 Salir"}
+  ]},
+  muelle:{ bg:A.bg_muelle, hots:[
+    {id:"crew",  x:7,y:40,w:25,h:44, lbl:"La tripulacion"},
+    {id:"guard", x:60,y:46,w:15,h:36, lbl:"Guardia del muelle"},
+    {id:"ship",  x:34,y:16,w:26,h:48, lbl:"El barco"},
+    {id:"back_pueblo2", x:0,y:22,w:7,h:62, lbl:"\u2190 Al pueblo"}
+  ]}
+};
+const DUEL = [
+  {t:"Hagamos un quick sync para alinear sinergias sobre tu rendicion.",
+   o:[{x:"Yo no sincronizo con relojes descompuestos, compadre.",ok:1},
+      {x:"Eh\u2026 \u00bfte agendo para el jueves?"},
+      {x:"Suena bien, pasame la minuta."}]},
+  {t:"Tu propuesta de valor es, siendo honesto, poco escalable.",
+   o:[{x:"Mas escalable que tu personalidad, y eso ya es decir.",ok:1},
+      {x:"Tienes razon, dejame iterarlo."},
+      {x:"\u00bfMe das feedback por escrito?"}]},
+  {t:"Voy a tener que pushear back en tu actitud, marinero.",
+   o:[{x:"Pushea lo que quieras; el unico push aqui es el que te manda al agua.",ok:1},
+      {x:"Perdon, no fue mi intencion."},
+      {x:"Lo tomo como area de oportunidad."}]},
+  {t:"Eso no esta en mi job description, pirata.",
+   o:[{x:"Tu job description es estorbar, y ahi si eres senior.",ok:1},
+      {x:"Entiendo, no es tu rol."},
+      {x:"\u00bfCon quien lo escalo?"}]},
+  {t:"Mejor pongamoslo en un parking lot y le damos seguimiento luego.",
+   o:[{x:"El unico parking lot aqui es donde voy a estacionar tu ego.",ok:1},
+      {x:"Va, lo dejamos en pausa."},
+      {x:"Te marco la otra semana."}]}
+];
+let duelRound=0, duelScore=0;
+const $=s=>document.querySelector(s);
+const frame=$("#frame"), hots=$("#hots"), invEl=$("#inv"),
+  dlg=$("#dlg"), dlgnm=$("#dlgnm"), dlgln=$("#dlgln"), dlgport=$("#dlgport"),
+  dlgportbox=$("#dlg .port"), duel=$("#duel"), toastEl=$("#toast"), bgm=$("#bgm");
+
+let toastT;
+function toast(m){ toastEl.textContent=m; toastEl.style.opacity=1; clearTimeout(toastT);
+  toastT=setTimeout(()=>toastEl.style.opacity=0,1700); }
+
+function say(lines, after){ dq=lines.slice(); dqAfter=after||null; S.dialBusy=true; dlg.style.display="block"; nextLine(); }
+function nextLine(){
+  if(dq.length===0){ dlg.style.display="none"; S.dialBusy=false; const a=dqAfter; dqAfter=null; if(a)a(); updateObjective(); return; }
+  const pair=dq.shift(); const spk=pair[0], text=pair[1]; const s=SPK[spk]||SPK.narr;
+  dlgnm.textContent=s.nm; dlgln.textContent=text;
+  if(s.port){ dlgport.src=s.port; dlgportbox.style.display="block"; } else { dlgportbox.style.display="none"; }
+}
+dlg.addEventListener("click",()=>{ if(S.dialBusy) nextLine(); });
+
+function renderInv(){
+  invEl.innerHTML="";
+  S.inv.forEach(id=>{
+    const d=document.createElement("div"); d.className="slot"+(selected===id?" sel":""); d.title=ITEMS[id].name;
+    const im=document.createElement("img"); im.src=ITEMS[id].img; im.alt=ITEMS[id].name; d.appendChild(im);
+    d.onclick=(e)=>{ e.stopPropagation(); onItemClick(id); };
+    invEl.appendChild(d);
+  });
+  const h=document.createElement("div"); h.id="invhint";
+  h.textContent= selected? ("Usando: "+ITEMS[selected].name+" \u2014 toca un lugar u objeto") : (S.inv.length? "Toca un objeto para usarlo":"");
+  invEl.appendChild(h);
+}
+function onItemClick(id){
+  if(selected && selected!==id){ tryCombine(selected,id); selected=null; renderInv(); return; }
+  selected = (selected===id)? null : id;
+  if(selected) toast("Seleccionado: "+ITEMS[id].name+" \u2014 toca donde usarlo");
+  renderInv();
+}
+function tryCombine(a,b){
+  const key=[a,b].sort().join("+");
+  if(key===["mapaA","mapaB"].sort().join("+")){
+    take("mapaA"); take("mapaB"); give("mapaFull");
+    say([["jerry","Junto las dos mitades\u2026 \u00a1encaja! El mapa completo. La X marca una cueva al norte del pueblo."]]);
+  } else {
+    say([["jerry","Eso no combina. No todo es sinergia\u2026 Don Corporativo casi tenia razon. Casi."]]);
+  }
+}
+
+function setScene(id){
+  S.scene=id; selected=null;
+  const sc=SCENES[id]; hots.innerHTML="";
+  const bg=document.createElement("div"); bg.className="scene-bg"; bg.style.backgroundImage="url('"+sc.bg+"')";
+  hots.appendChild(bg);
+  if(id==="cueva" && !S.caveLit){
+    const dk=document.createElement("div"); dk.className="scene-bg"; dk.style.background="rgba(2,1,8,.86)"; dk.style.zIndex=2; hots.appendChild(dk);
+  }
+  sc.hots.forEach(h=>{
+    if(h.id==="cave_dark" && S.caveLit) return;
+    const b=document.createElement("button"); b.className="hot";
+    b.style.left=h.x+"%"; b.style.top=h.y+"%"; b.style.width=h.w+"%"; b.style.height=h.h+"%";
+    b.style.zIndex=(h.id==="cave_dark")?3:4;
+    if(h.lbl){ const l=document.createElement("span"); l.className="lbl"; l.textContent=h.lbl; b.appendChild(l); }
+    b.onclick=(e)=>{ e.stopPropagation(); onHot(h.id); };
+    hots.appendChild(b);
+  });
+  frame.classList.add("showhots"); setTimeout(()=>frame.classList.remove("showhots"),1400);
+  renderInv(); updateObjective();
+}
+
+function updateObjective(){
+  let g;
+  if(!S.talkedChato) g="Habla con El Chato en la cantina.";
+  else if(!S.wonDuel) g="Prueba 1 \u2014 Ganale el Duelo de Ingenio a Don Corporativo (en el pueblo).";
+  else if(!S.gotTreasure) g="Prueba 2 \u2014 Arma el mapa, entra a la cueva y consigue el tesoro.";
+  else if(!(S.crewRallied&&S.guardDistracted)) g="Prueba 3 \u2014 En el muelle: convence a la tripulacion y burla al guardia.";
+  else g="\u00a1Sube al barco y zarpa!";
+  $("#obj").innerHTML="<b>Objetivo:</b> "+g;
+}
+
+function onHot(id){
+  if(S.dialBusy) return;
+  if(selected){ useItemOn(selected,id); return; }
+  switch(id){
+    case "chato":
+      if(!S.talkedChato){
+        say([
+          ["chato","\u00a1Jerry, cabron! Digo\u2026 Capitan Invierno Funk. \u00bfListo para zarpar?"],
+          ["jerry","Por eso vine, Chato. Vamonos ya."],
+          ["chato","Calma. En esta isla, si quieres tripulacion y barco, primero pasas LAS TRES PRUEBAS PIRATAS."],
+          ["chato","Una: el Duelo de Ingenio. Dos: el Tesoro Escondido. Tres: colar al Invitado Imposible a bordo."],
+          ["jerry","\u00bfY tanto tramite?"],
+          ["chato","Nadie sigue a un capitan sin filo. Empieza en el pueblo: ahi Don Corporativo reta a todos con su palabreria."],
+          ["chato","Llevate un grog de la barra. Para el valor. Y habla con Dan, algo se traia entre las cuentas."]
+        ], ()=>{ S.talkedChato=true; });
+      } else { say([["chato","Menos junta y mas accion, capitan. El pueblo sale por esa puerta. \u25ba"]]); }
+      break;
+    case "dan":
+      if(!S.talkedChato){ say([["dan","Ando cuadrando el botin y no me da. Habla con El Chato primero, porfa."]]); }
+      else if(!has("mapaA") && !has("mapaFull")){
+        say([["dan","Capitan, entre las cuentas se me traspapelo ESTO: media hoja de un mapa del tesoro."],
+             ["dan","A mi solo me cuadran los numeros. Quedatela tu."]], ()=>give("mapaA"));
+      } else { say([["dan","La otra mitad ni idea. En el pueblo ese Don Corporativo presume mapas."]]); }
+      break;
+    case "grog":
+      if(!has("grog")){ say([["jerry","Un grog bien servido. Para el valor, dijo Chato. A la bolsa."]], ()=>give("grog")); }
+      else { say([["jerry","Ya traigo mi grog. No sea que se acabe."]]); }
+      break;
+    case "door_pueblo":
+      if(!S.talkedChato){ say([["chato","\u00a1Ey! Primero habla conmigo, capitan."]]); } else setScene("pueblo");
+      break;
+    case "corp":
+      if(!S.wonDuel){
+        say([["corp","Vaya, vaya. \u00bfTu, capitan? Hagamos un quick sync para alinear expectativas\u2026 sobre tu derrota."],
+             ["jerry","Tu trae las palabras raras. Yo traigo las respuestas."]], ()=>startDuel());
+      } else { say([["corp","Largate, ganaste. No me hagas un follow-up."]]); }
+      break;
+    case "viri":
+      if(!has("antorcha")){
+        say([["viri","\u00a1Capitan! Disene el estandarte de tu barco. Bellisimo\u2026 aunque nadie lo vera si no zarpas."],
+             ["viri","Toma esta antorcha. Donde vas hay lugares OSCURISIMOS, y sin buena luz no se aprecia NADA. Regla de diseno."]], ()=>give("antorcha"));
+      } else { say([["viri","Usa la antorcha con criterio\u2026 y con buen contraste, eh."]]); }
+      break;
+    case "mistica":
+      if(!S.talkedMistica){
+        say([["mistica","Te esperaba, Invierno Funk. Los numeros no mienten."],
+             ["mistica","En la cueva, el altar pedira una alineacion. Recuerda: ONCE, ONCE. Cuando el tiempo se repite, el camino se abre."],
+             ["mistica","Y llevate este loro. Habla cuando menos te conviene\u2026 o cuando MAS te conviene."]],
+             ()=>{ S.talkedMistica=true; give("loro"); });
+      } else { say([["mistica","Once, once, capitan. Y no olvides la moneda: las maquinas viejas piden ofrenda."]]); }
+      break;
+    case "coin":
+      if(!has("moneda")){ say([["jerry","Una moneda de oro en el empedrado. Botin es botin."]], ()=>give("moneda")); }
+      else { say([["jerry","Ya recogi la moneda. No hay mas, revise bien."]]); }
+      break;
+    case "back_cantina": setScene("cantina"); break;
+    case "to_muelle": setScene("muelle"); break;
+    case "to_cave":
+      if(has("mapaFull")) setScene("cueva");
+      else say([["jerry","Hay un sendero al norte, pero sin el mapa completo no se a donde lleva. Necesito las dos mitades."]]);
+      break;
+    case "cave_dark": say([["jerry","Esta oscurisimo. Necesito una fuente de luz para ver el mecanismo."]]); break;
+    case "altar":
+      if(!S.caveLit){ say([["jerry","Muy oscuro. Algo de piedra hay en el centro, pero no distingo nada."]]); }
+      else if(S.gotTreasure){ say([["jerry","El altar ya esta abierto. Me lleve lo que importaba."]]); }
+      else { openAltar(); }
+      break;
+    case "back_pueblo": setScene("pueblo"); break;
+    case "crew":
+      if(!has("micro")){ say([["ale","\u00a1Capitan! \u00bfYa tienes con que convencer a la isla de zarpar?"],["jerry","En eso ando, Ale."]]); }
+      else if(!S.crewRallied){
+        say([["dan","\u00bfEso es\u2026 el Microfono Dorado?"],
+             ["viri","\u00a1Con eso reconectamos hasta al mas desconectado!"],
+             ["ale","\u00a1Tripulacion lista, capitan! Solo falta pasar al guardia del muelle."]], ()=>{ S.crewRallied=true; });
+      } else { say([["crew","\u00a1Listos para zarpar! Encargate del guardia."]]); }
+      break;
+    case "guard":
+      if(S.guardDistracted){ say([["jerry","El guardia anda\u2026 ocupado. Via libre."]]); }
+      else { say([["jerry","El guardia no me deja subir sin papeleo. Muy Don Corporativo de su parte."],
+                  ["jerry","Tengo que distraerlo con algo. \u00bfQue traigo en la bolsa?"]]); }
+      break;
+    case "ship": tryBoard(); break;
+    case "back_pueblo2": setScene("pueblo"); break;
+  }
+}
+function useItemOn(item,target){
+  selected=null; renderInv();
+  if(item==="antorcha" && S.scene==="cueva" && !S.caveLit){
+    S.caveLit=true;
+    say([["jerry","Enciendo la antorcha. Ahora si se aprecia el lugar. (Viri estaria orgullosa del contraste.)"]], ()=>setScene("cueva"));
+    return;
+  }
+  if(S.scene==="muelle" && target==="guard" && !S.guardDistracted){
+    if(item==="loro"){ S.guardDistracted=true;
+      say([["jerry","Suelto al loro. Empieza a gritar groserias nauticas y se le posa en la cabeza al guardia."],
+           ["jerry","El guardia sale corriendo tras el. Via libre."]]); return; }
+    if(item==="grog"){ S.guardDistracted=true;
+      say([["jerry","Le invito el grog al guardia. Tres tragos despues canta shanties con los ojos cerrados. Via libre."]]); return; }
+  }
+  if((item==="mapaA"&&target==="dan")||(item==="mapaB"&&target==="corp")){
+    say([["jerry","Ya es mio. No lo voy a regalar."]]); return; }
+  if(item==="moneda" && target==="altar" && S.scene==="cueva"){
+    if(!S.caveLit){ say([["jerry","Primero necesito luz para ver donde va."]]); return; }
+    openAltar(); return;
+  }
+  say([["jerry","Eso no funciona ahi, capitan."]]);
+}
+
+function openAltar(){
+  if(!has("moneda")){ say([["jerry","El altar tiene dos diales numerados y una ranura para una moneda. Me falta la ofrenda."]]); return; }
+  let d1=1,d2=1;
+  const wrap=document.createElement("div");
+  wrap.style.cssText="position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b0710e6;padding:16px;text-align:center;";
+  wrap.innerHTML='<div style="max-width:560px">'
+    +'<div style="color:var(--gold);font-size:clamp(14px,2.2vw,20px);margin-bottom:6px">Altar de la Isla</div>'
+    +'<div style="color:var(--parch);font-size:clamp(12px,1.8vw,16px);margin-bottom:14px">Alinea los diales e inserta la moneda. (La Mistica dijo: <i>once, once</i>.)</div>'
+    +'<div style="display:flex;gap:24px;justify-content:center;align-items:center;margin-bottom:16px">'
+    +'<div><button class="op" data-d="1" data-v="1" style="width:48px;text-align:center">&#9650;</button>'
+    +'<div id="dv1" style="font-size:30px;color:var(--gold);margin:6px 0;font-weight:bold">01</div>'
+    +'<button class="op" data-d="1" data-v="-1" style="width:48px;text-align:center">&#9660;</button></div>'
+    +'<div style="font-size:30px;color:var(--parch)">:</div>'
+    +'<div><button class="op" data-d="2" data-v="1" style="width:48px;text-align:center">&#9650;</button>'
+    +'<div id="dv2" style="font-size:30px;color:var(--gold);margin:6px 0;font-weight:bold">01</div>'
+    +'<button class="op" data-d="2" data-v="-1" style="width:48px;text-align:center">&#9660;</button></div>'
+    +'</div>'
+    +'<button class="btn" id="altargo">Insertar moneda y activar</button>'
+    +'<div><button class="op" id="altarx" style="margin-top:14px;background:#555">Salir</button></div>'
+    +'</div>';
+  frame.appendChild(wrap);
+  const upd=()=>{ wrap.querySelector("#dv1").textContent=String(d1).padStart(2,"0"); wrap.querySelector("#dv2").textContent=String(d2).padStart(2,"0"); };
+  wrap.querySelectorAll("button[data-d]").forEach(b=>b.onclick=()=>{
+    const dd=+b.dataset.d, v=+b.dataset.v;
+    if(dd===1){ d1=((d1-1+v+12)%12)+1; } else { d2=((d2-1+v+12)%12)+1; } upd();
+  });
+  wrap.querySelector("#altarx").onclick=()=>wrap.remove();
+  wrap.querySelector("#altargo").onclick=()=>{
+    if(d1===11 && d2===11){
+      wrap.remove(); take("moneda"); S.gotTreasure=true;
+      say([["jerry","Once\u2026 once. Inserto la moneda. CLIC. El altar se abre\u2026"],
+           ["jerry","No es oro. Es un MICROFONO DORADO. El verdadero tesoro: con esto se reconecta a cualquiera."]],
+           ()=>{ give("micro"); });
+    } else { toast("Los diales no se alinean\u2026 \u00bfque dijo la Mistica?"); }
+  };
+}
+
+function startDuel(){ duelRound=0; duelScore=0; $("#duelport").src=A.p_corp; duel.style.display="flex"; showDuelRound(); }
+function showDuelRound(){
+  if(duelRound>=DUEL.length){ endDuel(); return; }
+  const r=DUEL[duelRound];
+  $("#duelscore").textContent="Ronda "+(duelRound+1)+"/"+DUEL.length+" \u00b7 Filo: "+duelScore;
+  $("#dueltaunt").textContent="\u201c"+r.t+"\u201d";
+  const ops=$("#duelops"); ops.innerHTML="";
+  const shuffled=r.o.map((o,i)=>({x:o.x,ok:o.ok,i:i})).sort(()=>Math.random()-.5);
+  shuffled.forEach(o=>{ const b=document.createElement("button"); b.className="op"; b.textContent=o.x;
+    b.onclick=()=>pickDuel(o.ok?true:false,b); ops.appendChild(b); });
+}
+function pickDuel(correct,btn){
+  $("#duelops").querySelectorAll("button").forEach(b=>b.disabled=true);
+  btn.style.background=correct?"#3a7d44":"#a83a3a"; if(correct) duelScore++;
+  setTimeout(()=>{ duelRound++; showDuelRound(); },680);
+}
+function endDuel(){
+  duel.style.display="none";
+  if(duelScore>=3){
+    say([["corp","\u00a1Im-imposible! Tu\u2026 tu falta de profesionalismo es\u2026 brutalmente eficaz."],
+         ["jerry","Le decimos DMS: Do Meaningful Shit. Apuntalo en tu clipboard."],
+         ["corp","Toma. La otra mitad del mapa. No quiero mas sinergia contigo."]],
+         ()=>{ S.wonDuel=true; give("mapaB");
+           say([["jerry","Ahora a juntar las dos mitades del mapa. (Tocalas en el inventario para combinarlas.)"]]); });
+  } else {
+    say([["corp","Patetico. Vuelve cuando tengas mas\u2026 engagement."],
+         ["jerry","Voy de nuevo. Y esta vez sin filtro corporativo."]]);
+  }
+}
+
+function tryBoard(){
+  if(!S.wonDuel){ say([["jerry","Aun me falta el Duelo de Ingenio."]]); return; }
+  if(!S.gotTreasure){ say([["jerry","Me falta el Tesoro Escondido de la cueva."]]); return; }
+  if(!S.crewRallied){ say([["jerry","La tripulacion no sube sin una buena razon. Tengo que ensenarles algo legendario."]]); return; }
+  if(!S.guardDistracted){ say([["jerry","El guardia me bloquea. Primero hay que distraerlo."]]); return; }
+  say([["jerry","Tripulacion a bordo. Microfono en mano. \u00a1Suelten amarras!"]], showWin);
+}
+function showWin(){
+  $("#wintext").innerHTML="Con el Microfono Dorado al frente, <b>El Grog Desnudo</b> leva anclas. Ale, Dan y Viri en cubierta; El Chato al timon; Don Corporativo en el muelle, redactando una queja en su clipboard.<br><br>Pasaste las tres pruebas y la isla quedo reconectada.<br><b>DMS: Do Meaningful Shit.</b>";
+  $("#win").style.display="flex";
+}
+
+let muted=false;
+function initMusic(){ if(!bgm.src) bgm.src=A.music; bgm.volume=.45; }
+$("#mute").onclick=()=>{ muted=!muted; bgm.muted=muted; $("#mute").innerHTML=muted?"&#9834;&#822;":"&#9834;"; };
+
+function startGame(){
+  S=freshState(); selected=null;
+  $("#start").style.display="none"; $("#win").style.display="none";
+  setScene("cantina"); initMusic(); bgm.play().catch(()=>{});
+  say([["narr","Isla del Caribe. Atardecer violeta. Acabas de bajar del bote en la cantina El Grog Desnudo\u2026"],
+       ["jerry","Muy bien, Invierno Funk. Tripulacion, barco y a zarpar. \u00bfQue tan dificil puede ser?"]]);
+}
+$("#playbtn").onclick=startGame;
+$("#againbtn").onclick=startGame;
+$("#start").style.backgroundImage="url('"+A.title+"')";
+$("#win").style.backgroundImage="url('"+A.title+"')";
+
+addEventListener("keydown",e=>{
+  if(S && S.dialBusy && (e.code==="Space"||e.code==="Enter")){ e.preventDefault(); nextLine(); }
+  if(e.code==="KeyH"){ frame.classList.toggle("showhots"); }
+});
+
+(function preload(){
+  const urls=Object.values(A).filter(u=>!u.endsWith(".m4a"));
+  let n=0; const done=()=>{ if(++n>=urls.length){ $("#load").style.display="none"; } };
+  urls.forEach(u=>{ const im=new Image(); im.onload=done; im.onerror=done; im.src=u; });
+  setTimeout(()=>{ $("#load").style.display="none"; },4000);
+  $("#start").style.display="flex";
+})();
+</script>
+</body>
+</html>
